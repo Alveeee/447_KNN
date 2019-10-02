@@ -3,31 +3,31 @@
 
 #class for storing the data sets
 class dataset:
-    total_set = [][]
-    training_set = [][]
-    test_set = [][]
+    total_set = []
+    training_set = [[]]
+    test_set = [[]]
 
-    def __init__(file_name):
-
+    def __init__(self,file_name):
+        total_set = []
         #open input and output files
         with open(file_name) as readIn:
-
             #iterate over each line in input file
             for line in readIn:
-
                 features = line.split(",")
                 total_set.append(features)
+        self.total_set = total_set
+        print(total_set)
 
     def k_split(k):
         test_size = len(total_set.length)
-        training_set = [][]
-        test_set = [][]
+        training_set = [[]]
+        test_set = [[]]
 
         for i in range(0, k*test_size):
             training_set.append(total_set[i])
         for i in range(k*test_size, (k+1)*test_size):
             test_set.append(total_set[i])
-        for i in range((k+1)*test_size), len(total_set)):
+        for i in range((k+1)*test_size, len(total_set)):
             training_set.append(total_set[i])
 
 #class containing methods for preprocessing the datasets
@@ -43,13 +43,13 @@ class k_nearest_neighbor:
 #class for driving the program
 class main:
 
-    abalone = dataset("abalone.data")
-    car = dataset("car.data")
-    forest_fires = dataset("forestfires.csv")
-    machine = dataset("machine.data")
-    segmentation = dataset("segmentation.data")
-    wine_red = dataset("winequality-red.csv")
-    wine_white = dataset("winequality-white.csv")
+    abalone = dataset("data/abalone.data")
+    car = dataset("data/car.data")
+    forest_fires = dataset("data/forestfires.csv")
+    machine = dataset("data/machine.data")
+    segmentation = dataset("data/segmentation.data")
+    wine_red = dataset("data/winequality-red.csv")
+    wine_white = dataset("data/winequality-white.csv")
 
     #def run():
 
