@@ -1,16 +1,22 @@
 #K-Nearest Neighbor Implementation Project
 #Alexander Alvarez
 #Matt Wintersteen
+#Kyle Webster
 import math
 
-# euclidean distance using 2 vectors
-def euclideanDistance(v1,v2):
-    distance = 0
-    # assume: v1 and v2 are equal length
-    for x in range(len(v1)-1):
-        distance += pow((v1[x] - v2[x]),2)
-    return math.sqrt(distance)
-
+#generalized minkowski distance, where p is either input integer or string 'inf'
+def minkowskiDistance(v1,v2,p):
+    if type(p)==str:
+        maxDistance = 0
+        for x in range(len(v1)):
+            maxDistance = max(maxDistance, abs(v1[x]-v2[x]))
+        return maxDistance
+    else:
+        distance = 0
+        # assume: v1 and v2 are equal length
+        for x in range(len(v1)-1):
+            distance += pow((abs(v1[x]-v2[x])),p)
+        return pow(distance, 1.0/p)
 
 #class for storing the data sets
 class dataset:
@@ -52,7 +58,7 @@ class k_nearest_neighbor:
     def knn(trainingSet, t, k):
         distances = []
         for x in range(len(trainingSet)):
-            dist = euclideanDistance(t, trainingSet[x])
+            dist = minkowskiDistance(t, trainingSet[x], 2)
             distances.append((trainingSet[x], dist))
         # Sort by the second value in sub list
         distances.sort(key = lambda x: x[1])
