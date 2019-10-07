@@ -2,6 +2,7 @@
 #Alexander Alvarez
 #Matt Wintersteen
 #Kyle Webster
+#Greg Martin
 import math
 import random
 
@@ -188,6 +189,27 @@ class k_nearest_neighbor:
 
         return editedSets
 
+    def condenseSet(self, trainingSet, testSet, k):
+
+        condensedSetBefore = []
+        condensedSetAfter = []
+        while(True):
+            for i in range(len(trainingSet)):
+                x = trainingSet[i]
+                condensedSetBefore = condensedSetAfter
+                if(condensedSetBefore == []):
+                    condensedSetAfter.append(x)
+                    condensedSetBefore = condensedSetAfter
+                else:
+                    neighbors = self.knn(condensedSetAfter, x, 1)
+                    if(neighbors[0][0] != x[0]):
+                        condensedSetAfter.append(x)
+                        condensedSetBefore = condensedSetAfter
+            if(condensedSetBefore == condensedSetAfter):
+                break
+        return condensedSetAfter
+
+
     #gets classification performance for a single training/test set pair, returns accuracy
     def getClassificationPerformance(self, trainingSet, testSet, k):
 
@@ -255,6 +277,11 @@ class main:
             run_knn(knn_instance, training_sets, test_sets, k)
             print("Edited K-NN")
             run_knn(knn_instance, edited_sets, test_sets, k)
+            print("Condensed K-NN")
+            condensed_sets = training_sets[:]
+            for i in range(len(condensed_sets)):
+                condensed_sets[i] = knn_instance.condenseSet(condensed_sets[i], test_sets[i], k)
+            run_knn(knn_instance, condensed_sets, test_sets, k)
 
     trainSet = [[2, 2, 2, 'a'], [4, 4, 4, 'b'],[2, 3, 2, 'a'], [4, 4, 5, 'b']]
     testSet = [[5, 5, 5, 'b'],[2, 2, 1, 'a']]
