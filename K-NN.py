@@ -155,31 +155,38 @@ class k_nearest_neighbor:
         sortedVotes = sorted(classVotes.items(),key = lambda x: x[1],reverse=True)
         return sortedVotes[0][0]
 
-    def editSet(self, trainingSet, testSet, k):
+    def editSets(self, trainingSets, testSets, k):
 
-        editedSet = trainingSet[:]
-        change = 1.0
-        nothingRemoved = False
-        newAcc = 0
-        while (True):
-            tagged = []
-            for i in range(len(editedSet)):
-                point = editedSet[i]
-                if (self.getClass(self.knn(trainingSet, point, k)) != point[0]):
-                    nothingRemoved = False
-                    tagged.append(point)
+        print("Editing Sets...")
+        editedSets = []
+        for x in range(len(trainingSets)):
 
-            oldAcc = self.getClassificationPerformance(editedSet, testSet, k)
+            trainingSet = trainingSets[x]
+            testSet = testSets[x]
+            editedSet = trainingSet[:]
+            change = 1.0
+            nothingRemoved = False
+            newAcc = 0
+            while (True):
+                tagged = []
+                for i in range(len(editedSet)):
+                    point = editedSet[i]
+                    if (self.getClass(self.knn(trainingSet, point, k)) != point[0]):
+                        nothingRemoved = False
+                        tagged.append(point)
 
-            for tag in tagged:
-                editedSet.remove(tag)
+                oldAcc = self.getClassificationPerformance(editedSet, testSet, k)
 
-            newAcc = self.getClassificationPerformance(editedSet, testSet, k)
-            change = abs(newAcc - oldAcc)
-            if (change < 0.01):
-                break
+                for tag in tagged:
+                    editedSet.remove(tag)
 
-        return editedSet
+                newAcc = self.getClassificationPerformance(editedSet, testSet, k)
+                change = abs(newAcc - oldAcc)
+                if (change < 0.01):
+                    break
+            editedSets.append(editedSet)
+
+        return editedSets
 
     #gets classification performance for a single training/test set pair, returns accuracy
     def getClassificationPerformance(self, trainingSet, testSet, k):
@@ -236,17 +243,17 @@ class main:
         p = pre_processing(f)
         randomizedData = randomizeData(p.getData())
         data = dataset(randomizedData)
+        knn_instance = k_nearest_neighbor()
+
         training_sets = data.getTrainingSet()
         test_sets = data.getTestSet()
-        knn_instance = k_nearest_neighbor()
+        edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
+        
         for k in range(3,6):
             print("k = " + repr(k))
             print("K-NN")
             run_knn(knn_instance, training_sets, test_sets, k)
             print("Edited K-NN")
-            edited_sets = training_sets[:]
-            for i in range(len(edited_sets)):
-                edited_sets[i] = knn_instance.editSet(edited_sets[i], test_sets[i], k)
             run_knn(knn_instance, edited_sets, test_sets, k)
 
     trainSet = [[2, 2, 2, 'a'], [4, 4, 4, 'b'],[2, 3, 2, 'a'], [4, 4, 5, 'b']]
