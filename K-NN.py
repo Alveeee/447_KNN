@@ -3,6 +3,7 @@
 #Matt Wintersteen
 #Kyle Webster
 #Greg Martin
+
 import math
 import random
 
@@ -31,13 +32,10 @@ def randomizeData(data):
 
 #class for storing the data sets
 class dataset:
-    total_set = []
-
-    # training set is a list of training set data
-    # test set is a list of test set data
-    # changing the k for k fold cross validation will change the size
-    training_set = [[]]
-    test_set = [[]]
+    
+    total_set = [] #total data set
+    training_set = [] #list of training sets 
+    test_set = [] #list of test sets (respective to training sets)
 
     def __init__(self,data):
         self.total_set = data
@@ -52,6 +50,7 @@ class dataset:
     def getTestSet(self):
         return self.test_set
 
+    #k is number of training/test set pairs
     def kFoldCross(self, k):
         training_set = []
         test_set = []
@@ -75,9 +74,12 @@ class dataset:
 class pre_processing:
     data = []
     def __init__(self, file_name):
+        
         data = []
+        
         #open input and output files
         with open(file_name) as readIn:
+            
             #iterate over each line in input file
             for line in readIn:
                 if(file_name[:16] == "data/winequality"):
@@ -86,18 +88,23 @@ class pre_processing:
                     features = line.split(",")
                 data.append(features)
 
+        #dataset-dependent operations
         if(file_name == "data/forestfires.csv" or file_name == "data/winequality-red.csv" or file_name ==  "data/winequality-white.csv"):
             data = self.removeHeaders(data, 1)
         elif(file_name == "data/segmentation.data"):
             data = self.removeHeaders(data, 5)
+
+        #remove strings
         data = self.removeStrings(data)
 
         self.data = data
+        
     def removeHeaders(self, data, rows):
+        
         for i in range(rows):
-            print("Deleting Header Row")
-            print(data[0])
             del data[0]
+
+        print("Deleted Header Row")
         return data
 
     def removeStrings(self, data):
@@ -117,8 +124,6 @@ class pre_processing:
                 data[i][j] = float(d)
         if(len(stringlist) > 0):
             print("Removed Strings")
-            for s in stringlist:
-                print(s)
         return data
 
     def getData(self):
@@ -132,18 +137,24 @@ class k_nearest_neighbor:
         print("init knn")
 
     @staticmethod
-    def knn(trainingSet, t, k):
+    def knn(trainingSets, t, k):
+        
         distances = []
-        for x in range(len(trainingSet)):
-            dist = minkowskiDistance(t, trainingSet[x], 1)
-            distances.append((trainingSet[x], dist))
-        # Sort by the second value in sub list
+
+        #calculate distances for each training set
+        for x in range(len(trainingSets)):
+            dist = minkowskiDistance(t, trainingSets[x], 1)
+            distances.append((trainingSets[x], dist))
+
+        #find k nearest neighbors
         distances.sort(key = lambda x: x[1])
         neighbors = []
         for x in range(k):
             neighbors.append(distances[x][0])
+            
         return neighbors
 
+    #calculate class from neighbors using voting
     @staticmethod
     def getClass(neighbors):
         classVotes = {}
@@ -156,61 +167,81 @@ class k_nearest_neighbor:
         sortedVotes = sorted(classVotes.items(),key = lambda x: x[1],reverse=True)
         return sortedVotes[0][0]
 
+    #edit training sets using test sets
     def editSets(self, trainingSets, testSets, k):
 
         print("Editing Sets...")
         editedSets = []
+        
         for x in range(len(trainingSets)):
 
             trainingSet = trainingSets[x]
             testSet = testSets[x]
             editedSet = trainingSet[:]
             change = 1.0
-            nothingRemoved = False
-            newAcc = 0
+            newAccuracy = 0
+
+            #repeat
             while (True):
+                
                 tagged = []
+
+                #tag points for removal
                 for i in range(len(editedSet)):
                     point = editedSet[i]
                     if (self.getClass(self.knn(trainingSet, point, k)) != point[0]):
-                        nothingRemoved = False
                         tagged.append(point)
 
-                oldAcc = self.getClassificationPerformance(editedSet, testSet, k)
+                oldAccuracy = self.getClassificationPerformance(editedSet, testSet, k)
 
+                #remove points
                 for tag in tagged:
                     editedSet.remove(tag)
 
-                newAcc = self.getClassificationPerformance(editedSet, testSet, k)
-                change = abs(newAcc - oldAcc)
+                newAccuracy = self.getClassificationPerformance(editedSet, testSet, k)
+
+                change = abs(newAccuracy - oldAccuracy)
+
+                #until there is no change
                 if (change < 0.01):
                     break
+
             editedSets.append(editedSet)
 
         return editedSets
 
-    def condenseSet(self, trainingSet, testSet, k):
+    #edit training sets using test sets
+    def condenseSets(self, trainingSets, testSets, k):
 
-        condensedSetBefore = []
-        condensedSetAfter = []
-        while(True):
-            for i in range(len(trainingSet)):
-                x = trainingSet[i]
-                condensedSetBefore = condensedSetAfter
-                if(condensedSetBefore == []):
-                    condensedSetAfter.append(x)
+        print("Condensing Sets...")
+        condensedSets = []
+        
+        for n in range(len(trainingSets)):
+
+            trainingSet = trainingSets[n]
+            condensedSetBefore = []
+            condensedSetAfter = []
+            while(True):
+                for i in range(len(trainingSet)):
+                    x = trainingSet[i]
                     condensedSetBefore = condensedSetAfter
-                else:
-                    neighbors = self.knn(condensedSetAfter, x, 1)
-                    if(neighbors[0][0] != x[0]):
+                    if(condensedSetBefore == []):
                         condensedSetAfter.append(x)
                         condensedSetBefore = condensedSetAfter
-            if(condensedSetBefore == condensedSetAfter):
-                break
-        return condensedSetAfter
+                    else:
+                        neighbors = self.knn(condensedSetAfter, x, 1)
+                        if(neighbors[0][0] != x[0]):
+                            condensedSetAfter.append(x)
+                            condensedSetBefore = condensedSetAfter
+                if(condensedSetBefore == condensedSetAfter):
+                    break
+                
+            condensedSets.append(condensedSetAfter)
+            
+        return condensedSets
 
 
-    #gets classification performance for a single training/test set pair, returns accuracy
+     #runs a single training/test set, returns accuracy
     def getClassificationPerformance(self, trainingSet, testSet, k):
 
         predictions = []
@@ -247,11 +278,12 @@ class main:
                       "data/abalone.data"
                       ]
 
-
-    knn_instance = k_nearest_neighbor()
-
+    #classifies test sets using respective training sets, returns overall accuracy
     def run_knn(knn_instance, training_sets, test_sets, k):
+
         overall_accuracy = 0
+
+        #caclulate accuracy of each training/test set pair
         for i in range(len(training_sets)):
             accuracy = knn_instance.getClassificationPerformance(training_sets[i], test_sets[i], k)
             overall_accuracy += accuracy
@@ -260,17 +292,24 @@ class main:
 
         print ("Accuracy: " + repr(overall_accuracy))
 
+    knn_instance = k_nearest_neighbor()
+    
+    #for each classification data set
     for f in classification:
+
+        #import and process data set
         print("////////\n{}\n//////////\n".format(f))
         p = pre_processing(f)
         randomizedData = randomizeData(p.getData())
         data = dataset(randomizedData)
-        knn_instance = k_nearest_neighbor()
-
+        
+        #get all training sets
         training_sets = data.getTrainingSet()
         test_sets = data.getTestSet()
         edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
-        
+        condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
+
+        #for each value of k, run algorithms
         for k in range(3,6):
             print("k = " + repr(k))
             print("K-NN")
@@ -278,12 +317,4 @@ class main:
             print("Edited K-NN")
             run_knn(knn_instance, edited_sets, test_sets, k)
             print("Condensed K-NN")
-            condensed_sets = training_sets[:]
-            for i in range(len(condensed_sets)):
-                condensed_sets[i] = knn_instance.condenseSet(condensed_sets[i], test_sets[i], k)
             run_knn(knn_instance, condensed_sets, test_sets, k)
-
-    trainSet = [[2, 2, 2, 'a'], [4, 4, 4, 'b'],[2, 3, 2, 'a'], [4, 4, 5, 'b']]
-    testSet = [[5, 5, 5, 'b'],[2, 2, 1, 'a']]
-
-driver = main()
