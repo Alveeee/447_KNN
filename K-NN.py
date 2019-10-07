@@ -41,10 +41,10 @@ class dataset:
     def __init__(self,data):
         self.total_set = data
         self.kFoldCross(10)
-        
+
     def getTotalSet(self):
         return self.total_set
-    
+
     def getTrainingSet(self):
         return self.training_set
 
@@ -90,7 +90,7 @@ class pre_processing:
         elif(file_name == "data/segmentation.data"):
             data = self.removeHeaders(data, 5)
         data = self.removeStrings(data)
-        
+
         self.data = data
     def removeHeaders(self, data, rows):
         for i in range(rows):
@@ -104,9 +104,9 @@ class pre_processing:
         for i in range(len(data)):
             for j in range(len(data[i])):
                 d = data[i][j].strip()
-                
+
                 split = d.split(".")
-                
+
                 if((not d.isnumeric()) and (not split[0].isnumeric()) and (d[:1] != "-")):
                     if(d not in stringlist):
                         stringlist.append(d)
@@ -119,16 +119,18 @@ class pre_processing:
             for s in stringlist:
                 print(s)
         return data
-    
+
     def getData(self):
         return self.data
 
-        
+
 
 #class containing methods implementing the K-NN algorithms
 class k_nearest_neighbor:
     def __init__(self):
         print("init knn")
+
+    @staticmethod
     def knn(trainingSet, t, k):
         distances = []
         for x in range(len(trainingSet)):
@@ -140,7 +142,8 @@ class k_nearest_neighbor:
         for x in range(k):
             neighbors.append(distances[x][0])
         return neighbors
-    
+
+    @staticmethod
     def getClass(neighbors):
         classVotes = {}
         for x in range(len(neighbors)):
@@ -151,16 +154,53 @@ class k_nearest_neighbor:
                 classVotes[response] = 1
         sortedVotes = sorted(classVotes.items(),key = lambda x: x[1],reverse=True)
         return sortedVotes[0][0]
-    
+
+    def editSet(self, trainingSet, testSet, k):
+
+        editedSet = trainingSet[:]
+        change = 1.0
+        nothingRemoved = False
+        newAcc = 0
+        while (True):
+            tagged = []
+            for i in range(len(editedSet)):
+                point = editedSet[i]
+                if (self.getClass(self.knn(trainingSet, point, k)) != point[0]):
+                    nothingRemoved = False
+                    tagged.append(point)
+
+            oldAcc = self.getClassificationPerformance(editedSet, testSet, k)
+
+            for tag in tagged:
+                editedSet.remove(tag)
+
+            newAcc = self.getClassificationPerformance(editedSet, testSet, k)
+            change = abs(newAcc - oldAcc)
+            if (change < 0.01):
+                break
+
+        return editedSet
+
+    #gets classification performance for a single training/test set pair, returns accuracy
+    def getClassificationPerformance(self, trainingSet, testSet, k):
+
+        predictions = []
+        for x in range(len(testSet)):
+            neighbors = self.knn(trainingSet, testSet[x], k)
+            result = self.getClass(neighbors)
+            predictions.append(result)
+            #print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][0]))
+        return k_nearest_neighbor.getAccuracy(testSet,predictions)
+
+
     def getAccuracy(testSet, predictions):
         correct = 0
         for x in range(len(testSet)):
-            if testSet[x][0] is predictions[x]:
+            if (testSet[x][0] == predictions[x]):
                 correct += 1
+
         return (correct/float(len(testSet))) *100.0
-    
-    def k_nearest(data, k):
-        dataset.k_split(k)
+
 
 #class for driving the program
 class main:
@@ -178,31 +218,38 @@ class main:
                       "data/abalone.data"
                       ]
 
+
+    knn_instance = k_nearest_neighbor()
+
+    def run_knn(knn_instance, training_sets, test_sets, k):
+        overall_accuracy = 0
+        for i in range(len(training_sets)):
+            accuracy = knn_instance.getClassificationPerformance(training_sets[i], test_sets[i], k)
+            overall_accuracy += accuracy
+
+        overall_accuracy /= len(training_sets);
+
+        print ("Accuracy: " + repr(overall_accuracy))
+
     for f in classification:
         print("////////\n{}\n//////////\n".format(f))
         p = pre_processing(f)
         randomizedData = randomizeData(p.getData())
         data = dataset(randomizedData)
-        training_set = data.getTrainingSet()
-        test_set = data.getTrainingSet()
-
-        for i in range(len(training_set)):
-            trainSet = training_set[i]
-            testSet = test_set[i]
-            
-            k = 3
-            predictions = []
-            k_nearest_neighbor()
-            for x in range(len(testSet)):
-                neighbors = k_nearest_neighbor.knn(trainSet, testSet[x], k)
-                result = k_nearest_neighbor.getClass(neighbors)
-                predictions.append(result)
-                #print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][0]))
-            accuracy = k_nearest_neighbor.getAccuracy(testSet,predictions)
-            print('Accuracy: ' + repr(accuracy) + '%')
+        training_sets = data.getTrainingSet()
+        test_sets = data.getTestSet()
+        knn_instance = k_nearest_neighbor()
+        for k in range(3,6):
+            print("k = " + repr(k))
+            print("K-NN")
+            run_knn(knn_instance, training_sets, test_sets, k)
+            print("Edited K-NN")
+            edited_sets = training_sets[:]
+            for i in range(len(edited_sets)):
+                edited_sets[i] = knn_instance.editSet(edited_sets[i], test_sets[i], k)
+            run_knn(knn_instance, edited_sets, test_sets, k)
 
     trainSet = [[2, 2, 2, 'a'], [4, 4, 4, 'b'],[2, 3, 2, 'a'], [4, 4, 5, 'b']]
     testSet = [[5, 5, 5, 'b'],[2, 2, 1, 'a']]
 
 driver = main()
-#main.run()
