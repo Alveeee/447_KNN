@@ -118,13 +118,92 @@ class pre_processing:
                 if((not d.isnumeric()) and (not split[0].isnumeric()) and (d[:1] != "-")):
                     if(d not in stringlist):
                         stringlist.append(d)
-                        d = len(stringlist)
-                    else:
-                        d = stringlist.index(d)
-                data[i][j] = float(d)
+                    #else:
+                        #d = stringlist.index(d)
+                #data[i][j] = float(d)
+                data[i][j] = d
         if(len(stringlist) > 0):
             print("Removed Strings")
         return data
+    #Converts data into a Value Difference Matrix Probabilities for distance calculations
+    def processClassification(self, inData, fileName):
+        #Dictionary for probability conversions
+        table = {}
+        #Stores all classes for numberical conversions later
+        classes = []
+        #Car is the only categorical dataset that has the classification as the last value
+        if "car" in fileName:
+            # Generates and maps classes to nested dictinary, sorted by class, attribute column, and individual values
+            for c in inData:
+                if c[len(c)-1] not in classes:
+                    classes.append(c[len(c)-1])
+                table.setdefault(classes.index(c[len(c)-1]), {})
+                for idx, a in enumerate(c[:-1]):
+                    try:
+                        table[c[0]][idx+1][a] += 1
+                    except:
+                        table[c[0]].setdefault(idx+1, {})
+                        table[c[0]][idx+1].setdefault(a,1)
+                        table[c[0]][idx+1][a] +=1
+            # creates probability table within dictionary
+            print("Classification Probability Table")
+            for key in table:
+                for x in table[key]:
+                    total = 0
+                    for a in table[key][x]:
+                        total += table[key][x].get(a)
+                    for a in table[key][x]:
+                        table[key][x][a] /= float(total)
+            # Uses the values in dictionary to convert the input data
+            for i,c in enumerate(inData):
+                for idx, a in enumerate(c[:-1]):
+                    try:
+                        temp = classes.index(c[-1])
+                        inData[i][-1] = temp
+                        inData[i][idx+1] = table[temp][idx+1][a]
+                    except:
+                        inData[i][-1] = c[-1]
+                        inData[i][idx + 1] = table[c[-1]][idx + 1][a]
+            # pause for video
+            # input("")
+            return(inData)
+        #For the other categorical datasets
+        else:
+            #Generates and maps classes to nested dictinary, sorted by class, attribute column, and individual values
+            for c in inData:
+                if c[0] not in classes:
+                    classes.append(c[0])
+                table.setdefault(classes.index(c[0]), {})
+                for idx, a in enumerate(c[1:len(c)]):
+                    try:
+                        table[classes.index(c[0])][idx+1][a] += 1
+                    except:
+                        table[classes.index(c[0])].setdefault(idx+1, {})
+                        table[classes.index(c[0])][idx+1].setdefault(a,1)
+                        table[classes.index(c[0])][idx+1][a] +=1
+            #creates probability table within dictionary
+            print("Classification Probability Table")
+            for key in table:
+                for x in table[key]:
+                    total = 0
+                    for a in table[key][x]:
+                        total += table[key][x].get(a)
+                    for a in table[key][x]:
+                        table[key][x][a] /= float(total)
+                    print("Class:", key, "Attribute:", x, "Values:", table[key][x])
+            #Uses the values in dictionary to convert the input data
+            for i,c in enumerate(inData):
+                for idx, a in enumerate(c[1:len(c)]):
+                    try:
+                        temp = classes.index(c[0])
+                        inData[i][0] = temp
+                        inData[i][idx+1] = table[temp][idx+1][a]
+                    except:
+                        inData[i][0] = c[0]
+                        inData[i][idx + 1] = table[c[0]][idx + 1][a]
+            #pause for video
+            #input("")
+            return(inData)
 
     def getData(self):
         return self.data
@@ -295,12 +374,16 @@ class main:
     knn_instance = k_nearest_neighbor()
     
     #for each classification data set
-    for f in classification:
+    for f in files:
 
         #import and process data set
         print("////////\n{}\n//////////\n".format(f))
         p = pre_processing(f)
-        randomizedData = randomizeData(p.getData())
+        inData = []
+        #Categorical classification datasets converted
+        if f in classification:
+            inData = p.processClassification(p.getData(),f)
+        randomizedData = randomizeData(inData)
         data = dataset(randomizedData)
         
         #get all training sets
