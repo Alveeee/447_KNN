@@ -308,7 +308,10 @@ class k_nearest_neighbor:
                         condensedSetAfter.append(x)
                         condensedSetBefore = condensedSetAfter
                     else:
-                        neighbors = self.knn(condensedSetAfter, x, 1)
+                        if(len(condensedSetAfter) < k):
+                            neighbors = self.knn(condensedSetAfter, x, 1)
+                        else:
+                            neighbors = self.knn(condensedSetAfter, x, k)
                         if(neighbors[0][0] != x[0]):
                             condensedSetAfter.append(x)
                             condensedSetBefore = condensedSetAfter
