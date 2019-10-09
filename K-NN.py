@@ -7,7 +7,7 @@
 import math
 import random
 import time
-
+from operator import add
 #generalized minkowski distance, where p is either input integer or string 'inf'
 def minkowskiDistance(v1,v2,p):
     if type(p)==str:
