@@ -8,6 +8,7 @@ import math
 import random
 import time
 from operator import add
+
 #generalized minkowski distance, where p is either input integer or string 'inf'
 def minkowskiDistance(v1,v2,p):
     if type(p)==str:
@@ -126,6 +127,85 @@ class pre_processing:
         if(len(stringlist) > 0):
             print("Removed Strings")
         return data
+    #Converts data into a Value Difference Matrix Probabilities for distance calculations
+    def processClassification(self, inData, fileName):
+        #Dictionary for probability conversions
+        table = {}
+        #Stores all classes for numberical conversions later
+        classes = []
+        #Car is the only categorical dataset that has the classification as the last value
+        if "car" in fileName:
+            # Generates and maps classes to nested dictinary, sorted by class, attribute column, and individual values
+            for c in inData:
+                if c[len(c)-1] not in classes:
+                    classes.append(c[len(c)-1])
+                table.setdefault(classes.index(c[len(c)-1]), {})
+                for idx, a in enumerate(c[:-1]):
+                    try:
+                        table[c[0]][idx+1][a] += 1
+                    except:
+                        table[c[0]].setdefault(idx+1, {})
+                        table[c[0]][idx+1].setdefault(a,1)
+                        table[c[0]][idx+1][a] +=1
+            # creates probability table within dictionary
+            print("Classification Probability Table")
+            for key in table:
+                for x in table[key]:
+                    total = 0
+                    for a in table[key][x]:
+                        total += table[key][x].get(a)
+                    for a in table[key][x]:
+                        table[key][x][a] /= float(total)
+            # Uses the values in dictionary to convert the input data
+            for i,c in enumerate(inData):
+                for idx, a in enumerate(c[:-1]):
+                    try:
+                        temp = classes.index(c[-1])
+                        inData[i][-1] = temp
+                        inData[i][idx+1] = table[temp][idx+1][a]
+                    except:
+                        inData[i][-1] = c[-1]
+                        inData[i][idx + 1] = table[c[-1]][idx + 1][a]
+            # pause for video
+            # input("")
+            return(inData)
+        #For the other categorical datasets
+        else:
+            #Generates and maps classes to nested dictinary, sorted by class, attribute column, and individual values
+            for c in inData:
+                if c[0] not in classes:
+                    classes.append(c[0])
+                table.setdefault(classes.index(c[0]), {})
+                for idx, a in enumerate(c[1:len(c)]):
+                    try:
+                        table[classes.index(c[0])][idx+1][a] += 1
+                    except:
+                        table[classes.index(c[0])].setdefault(idx+1, {})
+                        table[classes.index(c[0])][idx+1].setdefault(a,1)
+                        table[classes.index(c[0])][idx+1][a] +=1
+            #creates probability table within dictionary
+            print("Classification Probability Table")
+            for key in table:
+                for x in table[key]:
+                    total = 0
+                    for a in table[key][x]:
+                        total += table[key][x].get(a)
+                    for a in table[key][x]:
+                        table[key][x][a] /= float(total)
+                    print("Class:", key, "Attribute:", x, "Values:", table[key][x])
+            #Uses the values in dictionary to convert the input data
+            for i,c in enumerate(inData):
+                for idx, a in enumerate(c[1:len(c)]):
+                    try:
+                        temp = classes.index(c[0])
+                        inData[i][0] = temp
+                        inData[i][idx+1] = table[temp][idx+1][a]
+                    except:
+                        inData[i][0] = c[0]
+                        inData[i][idx + 1] = table[c[0]][idx + 1][a]
+            #pause for video
+            #input("")
+            return(inData)
 
     def getData(self):
         return self.data
@@ -254,7 +334,48 @@ class k_nearest_neighbor:
             condensedSets.append(condensedSetAfter)
             
         return condensedSets
+    #Reducing dataset to centroids centered around the mean
+    def kMeans(self, data, k):
+        u = []
+        change = 1
+        for i in range(k):
+            u.append(random.choice(data))
+        while change > .001:
+            centroids = {}
+            for x in data:
+                minDistance = None
+                min = None
+                for m in u:
+                    dist = minkowskiDistance(x,m,2)
+                    if minDistance == None:
+                        minDistance = dist
+                        min = m
+                    elif dist < minDistance:
+                        minDistance = dist
+                        min = m
+                a = u.index(min)
+                try:
+                    centroids[a].append(x)
+                except:
+                    centroids.setdefault(a, [])
+                    centroids[a].append(x)
+            for i in range(len(u)):
+                a = u.index(u[i])
+                temp = centroids[a]
+                total = None
+                count = 0
+                print(temp)
+                for j in temp:
+                    total = list(map(add, total, j))
+                    count += 1
+                mean = [x / float(count) for x in total]
+                u[i] = mean
+        print(u)
+        return u
 
+    def kMedoids(self, data, k):
+
+        return None
 
      #runs a single training/test set, returns accuracy
     def getClassificationPerformance(self, method, trainingSet, testSet, k):
@@ -339,23 +460,29 @@ class main:
         #import and process data set
         print("//////////\n{}\n//////////".format(f))
         p = pre_processing(f)
-        randomizedData = randomizeData(p.getData())
+        inData = []
+        #Categorical classification datasets converted
+        if f in classification:
+            inData = p.processClassification(p.getData(),f)
+        randomizedData = randomizeData(inData)
         data = dataset(randomizedData)
         
         #get all training sets
         training_sets = data.getTrainingSet()
         test_sets = data.getTestSet()
         edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
-        condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
-
+        #condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
+        for j,i in enumerate(edited_sets):
+            print("K-Means")
+            centroidsMean = knn_instance.kMeans(training_sets[j], len(i))
         #for each value of k, run algorithms
         for k in range(3,6):
-            print("\n//////////\nk = " + repr(k)+"\n//////////")
-            print("K-NN")
-            run_knn(method, knn_instance, training_sets, test_sets, k)
-            # We only run edited and condensed on classification datasets (method = True)
-            if(method):
-                print("Edited K-NN")
-                run_knn(method, knn_instance, edited_sets, test_sets, k)
-                print("Condensed K-NN")
-                run_knn(method, knn_instance, condensed_sets, test_sets, k)
+            #print("k = " + repr(k))
+            #print("K-NN")
+            #run_knn(knn_instance, training_sets, test_sets, k)
+            #print("Edited K-NN")
+            #run_knn(knn_instance, edited_sets, test_sets, k)
+            #print("Condensed K-NN")
+            #run_knn(knn_instance, condensed_sets, test_sets, k)
+            print("K-Means")
+
