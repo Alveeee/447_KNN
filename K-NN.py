@@ -6,7 +6,7 @@
 
 import math
 import random
-from operator import add
+import time
 
 #generalized minkowski distance, where p is either input integer or string 'inf'
 def minkowskiDistance(v1,v2,p):
@@ -113,98 +113,19 @@ class pre_processing:
         for i in range(len(data)):
             for j in range(len(data[i])):
                 d = data[i][j].strip()
-
-                split = d.split(".")
-
-                if((not d.isnumeric()) and (not split[0].isnumeric()) and (d[:1] != "-")):
+                
+                try:
+                    data[i][j] = float(d)
+                except ValueError:
                     if(d not in stringlist):
                         stringlist.append(d)
-                    #else:
-                        #d = stringlist.index(d)
-                #data[i][j] = float(d)
-                data[i][j] = d
+                        d = len(stringlist)
+                    else:
+                        d = stringlist.index(d)
+                    data[i][j] = float(d)
         if(len(stringlist) > 0):
             print("Removed Strings")
         return data
-    #Converts data into a Value Difference Matrix Probabilities for distance calculations
-    def processClassification(self, inData, fileName):
-        #Dictionary for probability conversions
-        table = {}
-        #Stores all classes for numberical conversions later
-        classes = []
-        #Car is the only categorical dataset that has the classification as the last value
-        if "car" in fileName:
-            # Generates and maps classes to nested dictinary, sorted by class, attribute column, and individual values
-            for c in inData:
-                if c[len(c)-1] not in classes:
-                    classes.append(c[len(c)-1])
-                table.setdefault(classes.index(c[len(c)-1]), {})
-                for idx, a in enumerate(c[:-1]):
-                    try:
-                        table[c[0]][idx+1][a] += 1
-                    except:
-                        table[c[0]].setdefault(idx+1, {})
-                        table[c[0]][idx+1].setdefault(a,1)
-                        table[c[0]][idx+1][a] +=1
-            # creates probability table within dictionary
-            print("Classification Probability Table")
-            for key in table:
-                for x in table[key]:
-                    total = 0
-                    for a in table[key][x]:
-                        total += table[key][x].get(a)
-                    for a in table[key][x]:
-                        table[key][x][a] /= float(total)
-            # Uses the values in dictionary to convert the input data
-            for i,c in enumerate(inData):
-                for idx, a in enumerate(c[:-1]):
-                    try:
-                        temp = classes.index(c[-1])
-                        inData[i][-1] = temp
-                        inData[i][idx+1] = table[temp][idx+1][a]
-                    except:
-                        inData[i][-1] = c[-1]
-                        inData[i][idx + 1] = table[c[-1]][idx + 1][a]
-            # pause for video
-            # input("")
-            return(inData)
-        #For the other categorical datasets
-        else:
-            #Generates and maps classes to nested dictinary, sorted by class, attribute column, and individual values
-            for c in inData:
-                if c[0] not in classes:
-                    classes.append(c[0])
-                table.setdefault(classes.index(c[0]), {})
-                for idx, a in enumerate(c[1:len(c)]):
-                    try:
-                        table[classes.index(c[0])][idx+1][a] += 1
-                    except:
-                        table[classes.index(c[0])].setdefault(idx+1, {})
-                        table[classes.index(c[0])][idx+1].setdefault(a,1)
-                        table[classes.index(c[0])][idx+1][a] +=1
-            #creates probability table within dictionary
-            print("Classification Probability Table")
-            for key in table:
-                for x in table[key]:
-                    total = 0
-                    for a in table[key][x]:
-                        total += table[key][x].get(a)
-                    for a in table[key][x]:
-                        table[key][x][a] /= float(total)
-                    print("Class:", key, "Attribute:", x, "Values:", table[key][x])
-            #Uses the values in dictionary to convert the input data
-            for i,c in enumerate(inData):
-                for idx, a in enumerate(c[1:len(c)]):
-                    try:
-                        temp = classes.index(c[0])
-                        inData[i][0] = temp
-                        inData[i][idx+1] = table[temp][idx+1][a]
-                    except:
-                        inData[i][0] = c[0]
-                        inData[i][idx + 1] = table[c[0]][idx + 1][a]
-            #pause for video
-            #input("")
-            return(inData)
 
     def getData(self):
         return self.data
@@ -246,6 +167,17 @@ class k_nearest_neighbor:
                 classVotes[response] = 1
         sortedVotes = sorted(classVotes.items(),key = lambda x: x[1],reverse=True)
         return sortedVotes[0][0]
+    #calculate mean from neighbors
+    @staticmethod
+    def getMean(neighbors):
+        total = 0.0
+        for x in range(len(neighbors)):
+            response = neighbors[x][0]
+            total += response
+
+        avg = total/len(neighbors)
+        
+        return avg
 
     #edit training sets using test sets
     def editSets(self, trainingSets, testSets, k):
@@ -271,14 +203,14 @@ class k_nearest_neighbor:
                     point = editedSet[i]
                     if (self.getClass(self.knn(trainingSet, point, k)) != point[0]):
                         tagged.append(point)
-
-                oldAccuracy = self.getClassificationPerformance(editedSet, testSet, k)
+                #True is for the method, we want to use classification
+                oldAccuracy = self.getClassificationPerformance(True,editedSet, testSet, k)
 
                 #remove points
                 for tag in tagged:
                     editedSet.remove(tag)
 
-                newAccuracy = self.getClassificationPerformance(editedSet, testSet, k)
+                newAccuracy = self.getClassificationPerformance(True,editedSet, testSet, k)
 
                 change = abs(newAccuracy - oldAccuracy)
 
@@ -322,59 +254,26 @@ class k_nearest_neighbor:
             condensedSets.append(condensedSetAfter)
             
         return condensedSets
-    #Reducing dataset to centroids centered around the mean
-    def kMeans(self, data, k):
-        u = []
-        change = 1
-        for i in range(k):
-            u.append(random.choice(data))
-        while change > .001:
-            centroids = {}
-            for x in data:
-                minDistance = None
-                min = None
-                for m in u:
-                    dist = minkowskiDistance(x,m,1)
-                    if minDistance == None:
-                        minDistance = dist
-                        min = m
-                    elif dist < minDistance:
-                        minDistance = dist
-                        min = m
-                a = u.index(min)
-                try:
-                    centroids[a].append(x)
-                except:
-                    centroids.setdefault(a, [])
-                    centroids[a].append(x)
-            for i in range(len(u)):
-                a = u.index(u[i])
-                temp = centroids[a]
-                total = None
-                count = 0
-                print(temp)
-                for j in temp:
-                    total = list(map(add, total, j))
-                    count += 1
-                mean = [x / float(count) for x in total]
-                u[i] = mean
-        print(u)
-        return u
 
-    def kMedoids(self, data, k):
-
-        return None
 
      #runs a single training/test set, returns accuracy
-    def getClassificationPerformance(self, trainingSet, testSet, k):
+    def getClassificationPerformance(self, method, trainingSet, testSet, k):
 
         predictions = []
         for x in range(len(testSet)):
             neighbors = self.knn(trainingSet, testSet[x], k)
-            result = self.getClass(neighbors)
+            if(method):
+                result = self.getClass(neighbors)
+            else:
+                result = self.getMean(neighbors)
             predictions.append(result)
             #print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][0]))
-        return k_nearest_neighbor.getAccuracy(testSet,predictions)
+        if(method):
+            #for classification we just check if the prediction class = the test set
+            return k_nearest_neighbor.getAccuracy(testSet,predictions)
+        else:
+            #for regression, I have decided to just use MSE (we can change this)
+            return k_nearest_neighbor.getMSE(testSet,predictions)
 
 
     def getAccuracy(testSet, predictions):
@@ -384,32 +283,44 @@ class k_nearest_neighbor:
                 correct += 1
 
         return (correct/float(len(testSet))) *100.0
+    
+    def getMSE(testSet,predictions):
+        total = 0
+        size = len(testSet)
+        for i in range(0,size):
+            dif_squared = (predictions[i] - testSet[i][0])**2
+            total += dif_squared
+        MSE = total/size
+        return MSE
 
 
 #class for driving the program
 class main:
-    files = ["data/abalone.data",
-             "data/car.data",
+    files = ["data/machine.data",
              "data/forestfires.csv",
-             "data/machine.data",
              "data/segmentation.data",
+             "data/car.data",
              "data/winequality-red.csv",
+             "data/abalone.data",
              "data/winequality-white.csv"]
 
-    #temp testing
     classification = ["data/segmentation.data",
                       "data/car.data",
-                      "data/abalone.data"
-                      ]
+                      "data/abalone.data"]
+    
+    regression = ["data/forestfires.csv",
+                  "data/machine.data",
+                  "data/winequality-red.csv",
+                  "data/winequality-white.csv"]
 
     #classifies test sets using respective training sets, returns overall accuracy
-    def run_knn(knn_instance, training_sets, test_sets, k):
+    def run_knn(method, knn_instance, training_sets, test_sets, k):
 
         overall_accuracy = 0
 
         #caclulate accuracy of each training/test set pair
         for i in range(len(training_sets)):
-            accuracy = knn_instance.getClassificationPerformance(training_sets[i], test_sets[i], k)
+            accuracy = knn_instance.getClassificationPerformance(method, training_sets[i], test_sets[i], k)
             overall_accuracy += accuracy
 
         overall_accuracy /= len(training_sets);
@@ -420,33 +331,31 @@ class main:
     
     #for each classification data set
     for f in files:
+        # method will be True for classification, false for regression
+        method = True
+        if(f in regression):
+            method = False
 
         #import and process data set
-        print("////////\n{}\n//////////\n".format(f))
+        print("//////////\n{}\n//////////".format(f))
         p = pre_processing(f)
-        inData = []
-        #Categorical classification datasets converted
-        if f in classification:
-            inData = p.processClassification(p.getData(),f)
-        randomizedData = randomizeData(inData)
+        randomizedData = randomizeData(p.getData())
         data = dataset(randomizedData)
         
         #get all training sets
         training_sets = data.getTrainingSet()
         test_sets = data.getTestSet()
         edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
-        #condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
-        for j,i in enumerate(edited_sets):
-            print("K-Means")
-            centroidsMean = knn_instance.kMeans(training_sets[j], len(i))
+        condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
+
         #for each value of k, run algorithms
         for k in range(3,6):
-            #print("k = " + repr(k))
-            #print("K-NN")
-            #run_knn(knn_instance, training_sets, test_sets, k)
-            #print("Edited K-NN")
-            #run_knn(knn_instance, edited_sets, test_sets, k)
-            #print("Condensed K-NN")
-            #run_knn(knn_instance, condensed_sets, test_sets, k)
-            print("K-Means")
-
+            print("\n//////////\nk = " + repr(k)+"\n//////////")
+            print("K-NN")
+            run_knn(method, knn_instance, training_sets, test_sets, k)
+            # We only run edited and condensed on classification datasets (method = True)
+            if(method):
+                print("Edited K-NN")
+                run_knn(method, knn_instance, edited_sets, test_sets, k)
+                print("Condensed K-NN")
+                run_knn(method, knn_instance, condensed_sets, test_sets, k)
