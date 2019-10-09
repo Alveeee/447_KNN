@@ -6,6 +6,7 @@
 
 import math
 import random
+import time
 
 #generalized minkowski distance, where p is either input integer or string 'inf'
 def minkowskiDistance(v1,v2,p):
@@ -112,16 +113,16 @@ class pre_processing:
         for i in range(len(data)):
             for j in range(len(data[i])):
                 d = data[i][j].strip()
-
-                split = d.split(".")
-
-                if((not d.isnumeric()) and (not split[0].isnumeric()) and (d[:1] != "-")):
+                
+                try:
+                    data[i][j] = float(d)
+                except ValueError:
                     if(d not in stringlist):
                         stringlist.append(d)
                         d = len(stringlist)
                     else:
                         d = stringlist.index(d)
-                data[i][j] = float(d)
+                    data[i][j] = float(d)
         if(len(stringlist) > 0):
             print("Removed Strings")
         return data
@@ -166,6 +167,17 @@ class k_nearest_neighbor:
                 classVotes[response] = 1
         sortedVotes = sorted(classVotes.items(),key = lambda x: x[1],reverse=True)
         return sortedVotes[0][0]
+    #calculate mean from neighbors
+    @staticmethod
+    def getMean(neighbors):
+        total = 0.0
+        for x in range(len(neighbors)):
+            response = neighbors[x][0]
+            total += response
+
+        avg = total/len(neighbors)
+        
+        return avg
 
     #edit training sets using test sets
     def editSets(self, trainingSets, testSets, k):
@@ -191,14 +203,14 @@ class k_nearest_neighbor:
                     point = editedSet[i]
                     if (self.getClass(self.knn(trainingSet, point, k)) != point[0]):
                         tagged.append(point)
-
-                oldAccuracy = self.getClassificationPerformance(editedSet, testSet, k)
+                #True is for the method, we want to use classification
+                oldAccuracy = self.getClassificationPerformance(True,editedSet, testSet, k)
 
                 #remove points
                 for tag in tagged:
                     editedSet.remove(tag)
 
-                newAccuracy = self.getClassificationPerformance(editedSet, testSet, k)
+                newAccuracy = self.getClassificationPerformance(True,editedSet, testSet, k)
 
                 change = abs(newAccuracy - oldAccuracy)
 
@@ -245,15 +257,23 @@ class k_nearest_neighbor:
 
 
      #runs a single training/test set, returns accuracy
-    def getClassificationPerformance(self, trainingSet, testSet, k):
+    def getClassificationPerformance(self, method, trainingSet, testSet, k):
 
         predictions = []
         for x in range(len(testSet)):
             neighbors = self.knn(trainingSet, testSet[x], k)
-            result = self.getClass(neighbors)
+            if(method):
+                result = self.getClass(neighbors)
+            else:
+                result = self.getMean(neighbors)
             predictions.append(result)
             #print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][0]))
-        return k_nearest_neighbor.getAccuracy(testSet,predictions)
+        if(method):
+            #for classification we just check if the prediction class = the test set
+            return k_nearest_neighbor.getAccuracy(testSet,predictions)
+        else:
+            #for regression, I have decided to just use MSE (we can change this)
+            return k_nearest_neighbor.getMSE(testSet,predictions)
 
 
     def getAccuracy(testSet, predictions):
@@ -263,32 +283,44 @@ class k_nearest_neighbor:
                 correct += 1
 
         return (correct/float(len(testSet))) *100.0
+    
+    def getMSE(testSet,predictions):
+        total = 0
+        size = len(testSet)
+        for i in range(0,size):
+            dif_squared = (predictions[i] - testSet[i][0])**2
+            total += dif_squared
+        MSE = total/size
+        return MSE
 
 
 #class for driving the program
 class main:
-    files = ["data/abalone.data",
-             "data/car.data",
+    files = ["data/machine.data",
              "data/forestfires.csv",
-             "data/machine.data",
              "data/segmentation.data",
+             "data/car.data",
              "data/winequality-red.csv",
+             "data/abalone.data",
              "data/winequality-white.csv"]
 
-    #temp testing
     classification = ["data/segmentation.data",
                       "data/car.data",
-                      "data/abalone.data"
-                      ]
+                      "data/abalone.data"]
+    
+    regression = ["data/forestfires.csv",
+                  "data/machine.data",
+                  "data/winequality-red.csv",
+                  "data/winequality-white.csv"]
 
     #classifies test sets using respective training sets, returns overall accuracy
-    def run_knn(knn_instance, training_sets, test_sets, k):
+    def run_knn(method, knn_instance, training_sets, test_sets, k):
 
         overall_accuracy = 0
 
         #caclulate accuracy of each training/test set pair
         for i in range(len(training_sets)):
-            accuracy = knn_instance.getClassificationPerformance(training_sets[i], test_sets[i], k)
+            accuracy = knn_instance.getClassificationPerformance(method, training_sets[i], test_sets[i], k)
             overall_accuracy += accuracy
 
         overall_accuracy /= len(training_sets);
@@ -298,10 +330,14 @@ class main:
     knn_instance = k_nearest_neighbor()
     
     #for each classification data set
-    for f in classification:
+    for f in files:
+        # method will be True for classification, false for regression
+        method = True
+        if(f in regression):
+            method = False
 
         #import and process data set
-        print("////////\n{}\n//////////\n".format(f))
+        print("//////////\n{}\n//////////".format(f))
         p = pre_processing(f)
         randomizedData = randomizeData(p.getData())
         data = dataset(randomizedData)
@@ -314,10 +350,12 @@ class main:
 
         #for each value of k, run algorithms
         for k in range(3,6):
-            print("k = " + repr(k))
+            print("\n//////////\nk = " + repr(k)+"\n//////////")
             print("K-NN")
-            run_knn(knn_instance, training_sets, test_sets, k)
-            print("Edited K-NN")
-            run_knn(knn_instance, edited_sets, test_sets, k)
-            print("Condensed K-NN")
-            run_knn(knn_instance, condensed_sets, test_sets, k)
+            run_knn(method, knn_instance, training_sets, test_sets, k)
+            # We only run edited and condensed on classification datasets (method = True)
+            if(method):
+                print("Edited K-NN")
+                run_knn(method, knn_instance, edited_sets, test_sets, k)
+                print("Condensed K-NN")
+                run_knn(method, knn_instance, condensed_sets, test_sets, k)
