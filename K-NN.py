@@ -95,17 +95,29 @@ class pre_processing:
         elif(file_name == "data/segmentation.data"):
             data = self.removeHeaders(data, 5)
 
+        #move class to rightmost column
+        if(file_name == "data/segmentation.data" or file_name == "data/car.data"):
+            data = self.moveColumn(data)
+
         #remove strings
         data = self.removeStrings(data)
 
         self.data = data
         
     def removeHeaders(self, data, rows):
-        
         for i in range(rows):
             del data[0]
 
         print("Deleted Header Row")
+        return data
+
+    def moveColumn(self, data):
+        for i in range(len(data)):
+            l = len(data[i]) - 1 # for indexing the last element of the list
+            temp = data[i][0]
+            data[i][0] = data[i][l]
+            data[i][l] = temp
+        print("Moved first column to last column")
         return data
 
     def removeStrings(self, data):
@@ -125,6 +137,7 @@ class pre_processing:
                     data[i][j] = float(d)
         if(len(stringlist) > 0):
             print("Removed Strings")
+            print(stringlist)
         return data
 
     def getData(self):
@@ -160,19 +173,19 @@ class k_nearest_neighbor:
     def getClass(neighbors):
         classVotes = {}
         for x in range(len(neighbors)):
-            response = neighbors[x][0]
+            response = neighbors[x][len(neighbors[x])-1]
             if response in classVotes:
                 classVotes[response] += 1
             else:
                 classVotes[response] = 1
         sortedVotes = sorted(classVotes.items(),key = lambda x: x[1],reverse=True)
-        return sortedVotes[0][0]
+        return sortedVotes[0][len(sortedVotes[0])-1]
     #calculate mean from neighbors
     @staticmethod
     def getMean(neighbors):
         total = 0.0
         for x in range(len(neighbors)):
-            response = neighbors[x][0]
+            response = neighbors[x][len(neighbors[x])-1]
             total += response
 
         avg = total/len(neighbors)
@@ -201,7 +214,7 @@ class k_nearest_neighbor:
                 #tag points for removal
                 for i in range(len(editedSet)):
                     point = editedSet[i]
-                    if (self.getClass(self.knn(trainingSet, point, k)) != point[0]):
+                    if (self.getClass(self.knn(trainingSet, point, k)) != point[len(point)-1]):
                         tagged.append(point)
                 #True is for the method, we want to use classification
                 oldAccuracy = self.getClassificationPerformance(True,editedSet, testSet, k)
@@ -215,11 +228,13 @@ class k_nearest_neighbor:
                 change = abs(newAccuracy - oldAccuracy)
 
                 #until there is no change
-                if (change < 0.01):
+                if (change < 0.1): # threshold value
                     break
 
             editedSets.append(editedSet)
-
+            num_removed = len(trainingSets[x])-len(editedSet)
+            print("{} rows have been edited out".format(num_removed))
+        
         return editedSets
 
     #edit training sets using test sets
@@ -245,7 +260,7 @@ class k_nearest_neighbor:
                             neighbors = self.knn(condensedSetAfter, x, 1)
                         else:
                             neighbors = self.knn(condensedSetAfter, x, k)
-                        if(neighbors[0][0] != x[0]):
+                        if(neighbors[0][len(neighbors[0])-1] != x[len(x)-1]):
                             condensedSetAfter.append(x)
                             condensedSetBefore = condensedSetAfter
                 if(condensedSetBefore == condensedSetAfter):
@@ -263,11 +278,11 @@ class k_nearest_neighbor:
         for x in range(len(testSet)):
             neighbors = self.knn(trainingSet, testSet[x], k)
             if(method):
-                result = self.getClass(neighbors)
+                result = float(self.getClass(neighbors))
             else:
-                result = self.getMean(neighbors)
+                result = float(self.getMean(neighbors))
             predictions.append(result)
-            #print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][0]))
+            #print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][len(testSet[x])-1]))
         if(method):
             #for classification we just check if the prediction class = the test set
             return k_nearest_neighbor.getAccuracy(testSet,predictions)
@@ -279,7 +294,7 @@ class k_nearest_neighbor:
     def getAccuracy(testSet, predictions):
         correct = 0
         for x in range(len(testSet)):
-            if (testSet[x][0] == predictions[x]):
+            if (testSet[x][len(testSet[x])-1] == predictions[x]):
                 correct += 1
 
         return (correct/float(len(testSet))) *100.0
@@ -288,7 +303,7 @@ class k_nearest_neighbor:
         total = 0
         size = len(testSet)
         for i in range(0,size):
-            dif_squared = (predictions[i] - testSet[i][0])**2
+            dif_squared = (predictions[i] - testSet[i][len(testSet[x])-1])**2
             total += dif_squared
         MSE = total/size
         return MSE
@@ -296,12 +311,12 @@ class k_nearest_neighbor:
 
 #class for driving the program
 class main:
-    files = ["data/machine.data",
-             "data/forestfires.csv",
-             "data/segmentation.data",
+    files = ["data/segmentation.data",
              "data/car.data",
-             "data/winequality-red.csv",
              "data/abalone.data",
+             "data/machine.data",
+             "data/forestfires.csv",
+             "data/winequality-red.csv",
              "data/winequality-white.csv"]
 
     classification = ["data/segmentation.data",
@@ -345,8 +360,9 @@ class main:
         #get all training sets
         training_sets = data.getTrainingSet()
         test_sets = data.getTestSet()
-        edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
-        condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
+        if(method):
+            edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
+            condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
 
         #for each value of k, run algorithms
         for k in range(3,6):
