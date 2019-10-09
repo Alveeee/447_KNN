@@ -115,10 +115,9 @@ class pre_processing:
 
     def moveColumn(self, data):
         for i in range(len(data)):
-            l = len(data[i]) - 1 # for indexing the last element of the list
             temp = data[i][0]
-            data[i][0] = data[i][l]
-            data[i][l] = temp
+            data[i][0] = data[i][-1]
+            data[i][-1] = temp
         print("Moved first column to last column")
         return data
 
@@ -264,7 +263,7 @@ class k_nearest_neighbor:
                 #tag points for removal
                 for i in range(len(editedSet)):
                     point = editedSet[i]
-                    if (self.getClass(self.knn(trainingSet, point, k)) != point[len(point)-1]):
+                    if (self.getClass(self.knn(trainingSet, point, k)) != point[-1]):
                         tagged.append(point)
                 #True is for the method, we want to use classification
                 oldAccuracy = self.getClassificationPerformance(True,editedSet, testSet, k)
@@ -447,7 +446,10 @@ class main:
 
         overall_accuracy /= len(training_sets);
 
-        print ("Accuracy: " + repr(overall_accuracy))
+        if (method):
+            print ("Accuracy: " + repr(overall_accuracy))
+        else:
+            print("Mean Squared Error: " + repr(overall_accuracy))
 
     knn_instance = k_nearest_neighbor()
     
@@ -489,7 +491,9 @@ class main:
             
 
         #for each value of k, run algorithms
-        for k in range(3,6):
+        for k in range(1,4):
+            k *= 2
+            k += 1
             print("\n//////////\nk = " + repr(k) + "\n//////////")
             print("K-NN")
             run_knn(method, knn_instance, training_sets, test_sets, k)
