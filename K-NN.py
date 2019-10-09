@@ -8,6 +8,7 @@ import math
 import random
 import time
 from operator import add
+import sys
 
 #generalized minkowski distance, where p is either input integer or string 'inf'
 def minkowskiDistance(v1,v2,p):
@@ -124,8 +125,12 @@ class pre_processing:
     def removeStrings(self, data):
         stringlist = []
         for i in range(len(data)):
-            for j in range(len(data[i])-1):
+            for j in range(len(data[i])):
                 d = data[i][j].strip()
+
+                if(j == len(data[i])-1):
+                    if(data[i][j].endswith('\n')):
+                        data[i][j] = data[i][j][:-1]
                 
                 try:
                     data[i][j] = float(d)
@@ -138,7 +143,6 @@ class pre_processing:
                     data[i][j] = float(d)
         if(len(stringlist) > 0):
             print("Removed Strings")
-            print(stringlist)
         return data
     #Converts data into a Value Difference Matrix Probabilities for distance calculations
     def processClassification(self, inData, fileName):
@@ -168,7 +172,7 @@ class pre_processing:
                     total += table[key][x].get(a)
                 for a in table[key][x]:
                     table[key][x][a] /= float(total)
-                print("Class:", key, "Attribute:", x, "Values:", table[key][x])
+                #print("Class:", key, "Attribute:", x, "Values:", table[key][x])
         #Uses the values in dictionary to convert the input data
         for i,c in enumerate(inData):
             for idx, a in enumerate(c[:len(c)-1]):
@@ -200,7 +204,7 @@ class k_nearest_neighbor:
 
         #calculate distances for each training set
         for x in range(len(trainingSets)):
-            dist = minkowskiDistance(t, trainingSets[x], 1)
+            dist = minkowskiDistance(t, trainingSets[x], 2)
             distances.append((trainingSets[x], dist))
 
         #find k nearest neighbors
@@ -223,7 +227,9 @@ class k_nearest_neighbor:
             else:
                 classVotes[response] = 1
         sortedVotes = sorted(classVotes.items(),key = lambda x: x[1],reverse=True)
-        return sortedVotes[0][len(sortedVotes[0])-1]
+        #sortedVotes[0] is the class with the most votes
+        #sortedVotes[0][0] is the class sortedVotes[0][1] is the number of votes
+        return sortedVotes[0][0]
     #calculate mean from neighbors
     @staticmethod
     def getMean(neighbors):
@@ -349,6 +355,7 @@ class k_nearest_neighbor:
                 for j in temp[1:]:
                     total = list(map(add, total, j))
                     count += 1
+                #print(total)
                 mean = [x / float(count) for x in total]
                 oldU = u
                 try:
@@ -361,7 +368,7 @@ class k_nearest_neighbor:
                 comb += minkowskiDistance(u[i], oldU[i], 2)
                 countC += 1
             change = comb/float(countC)
-        print("Means \n",u)
+        #print("Means \n",u)
         return u
 
     def kMedoids(self, data, k):
@@ -400,7 +407,7 @@ class k_nearest_neighbor:
         total = 0
         size = len(testSet)
         for i in range(0,size):
-            dif_squared = (predictions[i] - testSet[i][len(testSet[x])-1])**2
+            dif_squared = (predictions[i] - testSet[i][len(testSet[i])-1])**2
             total += dif_squared
         MSE = total/size
         return MSE
@@ -408,10 +415,12 @@ class k_nearest_neighbor:
 
 #class for driving the program
 class main:
-    files = ["data/segmentation.data",
-             "data/car.data",
-             "data/winequality-red.csv",
+    #sys.stdout = open("output.txt", "w")
+    print ("K-NN Project")
+    
+    files = ["data/car.data",
              "data/abalone.data",
+             "data/segmentation.data",
              "data/machine.data",
              "data/forestfires.csv",
              "data/winequality-red.csv",
@@ -470,9 +479,14 @@ class main:
             edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
             condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
         centroidsMean = []
-        for j,i in enumerate(edited_sets):
-            print("K-Means")
-            centroidsMean.append(knn_instance.kMeans(training_sets[j], len(i)))
+        print("K-Means")
+        if(method): #if classification, use the len of the edited knn as the number of clusters
+            for j,i in enumerate(edited_sets):
+                centroidsMean.append(knn_instance.kMeans(training_sets[j], len(i)))
+        else: #if regression, use 1/4 n with n being the size of the dataset
+            for tset in training_sets:
+                centroidsMean.append(knn_instance.kMeans(tset, int(len(tset)/4)))
+            
 
         #for each value of k, run algorithms
         for k in range(3,6):
