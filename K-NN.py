@@ -6,6 +6,7 @@
 
 import math
 import random
+from operator import add
 
 #generalized minkowski distance, where p is either input integer or string 'inf'
 def minkowskiDistance(v1,v2,p):
@@ -321,7 +322,48 @@ class k_nearest_neighbor:
             condensedSets.append(condensedSetAfter)
             
         return condensedSets
+    #Reducing dataset to centroids centered around the mean
+    def kMeans(self, data, k):
+        u = []
+        change = 1
+        for i in range(k):
+            u.append(random.choice(data))
+        while change > .001:
+            centroids = {}
+            for x in data:
+                minDistance = None
+                min = None
+                for m in u:
+                    dist = minkowskiDistance(x,m,1)
+                    if minDistance == None:
+                        minDistance = dist
+                        min = m
+                    elif dist < minDistance:
+                        minDistance = dist
+                        min = m
+                a = u.index(min)
+                try:
+                    centroids[a].append(x)
+                except:
+                    centroids.setdefault(a, [])
+                    centroids[a].append(x)
+            for i in range(len(u)):
+                a = u.index(u[i])
+                temp = centroids[a]
+                total = None
+                count = 0
+                print(temp)
+                for j in temp:
+                    total = list(map(add, total, j))
+                    count += 1
+                mean = [x / float(count) for x in total]
+                u[i] = mean
+        print(u)
+        return u
 
+    def kMedoids(self, data, k):
+
+        return None
 
      #runs a single training/test set, returns accuracy
     def getClassificationPerformance(self, trainingSet, testSet, k):
@@ -393,14 +435,18 @@ class main:
         training_sets = data.getTrainingSet()
         test_sets = data.getTestSet()
         edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
-        condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
-
+        #condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
+        for j,i in enumerate(edited_sets):
+            print("K-Means")
+            centroidsMean = knn_instance.kMeans(training_sets[j], len(i))
         #for each value of k, run algorithms
         for k in range(3,6):
-            print("k = " + repr(k))
-            print("K-NN")
-            run_knn(knn_instance, training_sets, test_sets, k)
-            print("Edited K-NN")
-            run_knn(knn_instance, edited_sets, test_sets, k)
-            print("Condensed K-NN")
-            run_knn(knn_instance, condensed_sets, test_sets, k)
+            #print("k = " + repr(k))
+            #print("K-NN")
+            #run_knn(knn_instance, training_sets, test_sets, k)
+            #print("Edited K-NN")
+            #run_knn(knn_instance, edited_sets, test_sets, k)
+            #print("Condensed K-NN")
+            #run_knn(knn_instance, condensed_sets, test_sets, k)
+            print("K-Means")
+
