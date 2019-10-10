@@ -1,0 +1,6 @@
+Programming Contributions
+-------------------------
+Alex Alvarez:
+Greg Martin: Condensed K-NN
+Kyle Webster:
+Matthew Wintersteen:
