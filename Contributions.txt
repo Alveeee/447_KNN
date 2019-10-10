@@ -1,6 +1,6 @@
 Programming Contributions
 -------------------------
-Alex Alvarez:
+Alex Alvarez: Preprocessing, Edited K-NN
 Greg Martin: Condensed K-NN
-Kyle Webster:
-Matthew Wintersteen:
+Kyle Webster: K-Means Clustering, K-Medoids, Distance Calculation
+Matthew Wintersteen: Accuracy
