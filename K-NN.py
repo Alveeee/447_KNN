@@ -163,7 +163,7 @@ class pre_processing:
                     table[classes.index(c[-1])][idx+1].setdefault(a,1)
                     table[classes.index(c[-1])][idx+1][a] +=1
         #creates probability table within dictionary
-        print("Classification Probability Table")
+        #print("Classification Probability Table")
         for key in table:
             for x in table[key]:
                 total = 0
@@ -182,8 +182,6 @@ class pre_processing:
                 except:
                     inData[i][0] = c[-1]
                     inData[i][idx + 1] = table[c[-1]][idx + 1][int(a)]
-        #pause for video
-        #input("")
         return(inData)
 
     def getData(self):
@@ -212,7 +210,6 @@ class k_nearest_neighbor:
 
         for x in range(k):
             neighbors.append(distances[x][0])
-
         return neighbors
 
     #calculate class from neighbors using voting
@@ -283,7 +280,6 @@ class k_nearest_neighbor:
             editedSets.append(editedSet)
             num_removed = len(trainingSets[x])-len(editedSet)
             print("{} rows have been edited out".format(num_removed))
-
         return editedSets
 
     #edit training sets using test sets
@@ -316,7 +312,8 @@ class k_nearest_neighbor:
                     break
                 
             condensedSets.append(condensedSetAfter)
-            
+        for i in range(len(trainingSets)):
+            print("Reduced Training set by", len(trainingSets[i]) - len(condensedSets[i]), "values")
         return condensedSets
     #Reducing dataset to centroids centered around the mean
     def kMeans(self, data, k):
@@ -367,7 +364,6 @@ class k_nearest_neighbor:
                 comb += minkowskiDistance(u[i], oldU[i], 2)
                 countC += 1
             change = comb/float(countC)
-        #print("Means \n",u)
         return u
 
     def kMedoids(self, data, k):
@@ -430,7 +426,6 @@ class k_nearest_neighbor:
                 comb += minkowskiDistance(u[i], oldU[i], 1)
                 countC += 1
             change = comb / float(countC)
-        # print("Means \n",u)
         return u
 
      #runs a single training/test set, returns accuracy
@@ -485,10 +480,10 @@ class main:
     #sys.stdout = open("output.txt", "w")
     print ("K-NN Project")
     
-    files = ["data/forestfires.csv",
+    files = ["data/car.data",
+             "data/forestfires.csv",
+
              "data/segmentation.data",
-             
-             "data/car.data",
              "data/abalone.data",
              
              "data/machine.data",
@@ -515,9 +510,11 @@ class main:
             accuracy = knn_instance.getClassificationPerformance(method, training_sets[i], test_sets[i], k)
             overall_accuracy += accuracy
 
-        overall_accuracy /= len(training_sets);
-
-        print ("Accuracy: {:0.2f}%".format(overall_accuracy))
+        overall_accuracy /= len(training_sets)
+        if method:
+            print("Accuracy: {:0.2f}%".format(overall_accuracy))
+        else:
+            print("Mean Absolute Percentage Error: {:0.2f}%".format(overall_accuracy))
 
     knn_instance = k_nearest_neighbor()
     
@@ -530,10 +527,12 @@ class main:
 
         #import and process data set
         print("//////////\n{}\n//////////".format(f))
+        print("Pre-Processing")
         p = pre_processing(f)
         inData = []
         #Categorical classification datasets converted
         if f in classification:
+            print("Processing Categorical Classification using Similarity Matrix")
             inData = p.processClassification(p.getData(), f)
         else:
             inData = p.getData()
@@ -549,7 +548,7 @@ class main:
             edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
             condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
         centroidsMeans = []
-        print("K-Means")
+        print("Processing K-Means")
         if(method): #if classification, use the len of the edited knn as the number of clusters
             for j,i in enumerate(edited_sets):
                 centroidsMeans.append(knn_instance.kMeans(training_sets[j], len(i)))
@@ -557,7 +556,7 @@ class main:
             for tset in training_sets:
                 centroidsMeans.append(knn_instance.kMeans(tset, int(len(tset)/4)))
         centroidsPAM = []
-        print("K-PAM")
+        print("Processing K-PAM")
         if (method):  # if classification, use the len of the edited knn as the number of clusters
             for j, i in enumerate(edited_sets):
                 centroidsPAM.append(knn_instance.kMedoids(training_sets[j], len(i)))
