@@ -449,8 +449,8 @@ class k_nearest_neighbor:
             #for classification we just check if the prediction class = the test set
             return k_nearest_neighbor.getAccuracy(testSet,predictions)
         else:
-            #for regression, I have decided to just use MSE (we can change this)
-            return k_nearest_neighbor.getMSE(testSet,predictions)
+            #for regression, we will use MAPE or Mean Absolute Percentage Error
+            return k_nearest_neighbor.getMAPE(testSet,predictions)
 
 
     def getAccuracy(testSet, predictions):
@@ -461,14 +461,23 @@ class k_nearest_neighbor:
 
         return (correct/float(len(testSet))) *100.0
     
-    def getMSE(testSet,predictions):
-        total = 0
+    def getMAPE(testSet,predictions):
+        #absolute percentage error
+        abs_percent_error = 0.0
+        
         size = len(testSet)
         for i in range(0,size):
-            dif_squared = (predictions[i] - testSet[i][len(testSet[i])-1])**2
-            total += dif_squared
-        MSE = total/size
-        return MSE
+            actual = testSet[i][-1]
+            pred = predictions[i]
+            if(actual == 0):
+                actual += 1
+                pred += 1
+            abs_dif = abs(actual-pred)
+            abs_actual = abs(actual)
+            abs_percent_error += abs_dif/abs_actual
+        MAPE = (abs_percent_error/size)
+        accuracy = 100-MAPE
+        return accuracy
 
 
 #class for driving the program
@@ -476,11 +485,14 @@ class main:
     #sys.stdout = open("output.txt", "w")
     print ("K-NN Project")
     
-    files = ["data/car.data",
-             "data/abalone.data",
+    files = ["data/forestfires.csv",
              "data/segmentation.data",
+             
+             "data/car.data",
+             "data/abalone.data",
+             
              "data/machine.data",
-             "data/forestfires.csv",
+             
              "data/winequality-red.csv",
              "data/winequality-white.csv"]
 
@@ -505,10 +517,7 @@ class main:
 
         overall_accuracy /= len(training_sets);
 
-        if (method):
-            print ("Accuracy: " + repr(overall_accuracy))
-        else:
-            print("Mean Squared Error: " + repr(overall_accuracy))
+        print ("Accuracy: {:0.2f}%".format(overall_accuracy))
 
     knn_instance = k_nearest_neighbor()
     
@@ -567,7 +576,7 @@ class main:
                 run_knn(method, knn_instance, edited_sets, test_sets, k)
                 print("Condensed K-NN")
                 run_knn(method, knn_instance, condensed_sets, test_sets, k)
-                print("K-Means Clustering")
-                run_knn(method, knn_instance, centroidsMeans, test_sets, k)
-                print("Partitioning Around Medoids Clustering")
-                run_knn(method, knn_instance, centroidsPAM, test_sets, k)
+            print("K-Means Clustering")
+            run_knn(method, knn_instance, centroidsMeans, test_sets, k)
+            print("Partitioning Around Medoids Clustering")
+            run_knn(method, knn_instance, centroidsPAM, test_sets, k)
