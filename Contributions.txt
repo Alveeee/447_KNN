@@ -3,4 +3,4 @@ Programming Contributions
 Alex Alvarez: Preprocessing, Edited K-NN
 Greg Martin: Condensed K-NN
 Kyle Webster: K-Means Clustering, K-Medoids, Distance Calculation
-Matthew Wintersteen: Accuracy
+Matthew Wintersteen: K-NN, K-Fold Cross-Validation, Preprocessing, Regression accuracy method
