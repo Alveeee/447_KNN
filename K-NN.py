@@ -263,7 +263,7 @@ class k_nearest_neighbor:
                 #tag points for removal
                 for i in range(len(editedSet)):
                     point = editedSet[i]
-                    if (self.getClass(self.knn(trainingSet, point, k)) != point[-1]):
+                    if (self.getClass(self.knn(trainingSet, point, k)) != point[len(point)-1]):
                         tagged.append(point)
                 #True is for the method, we want to use classification
                 oldAccuracy = self.getClassificationPerformance(True,editedSet, testSet, k)
@@ -371,8 +371,67 @@ class k_nearest_neighbor:
         return u
 
     def kMedoids(self, data, k):
+        u = []
+        change = 1
+        for i in range(k):
+            u.append(random.choice(data))
+        while change > .1:
+            centroids = {}
+            for x in data:
+                minDistance = None
+                min = None
+                for m in u:
+                    dist = minkowskiDistance(x, m, 1)
+                    if minDistance == None:
+                        minDistance = dist
+                        min = m
+                    elif dist < minDistance:
+                        minDistance = dist
+                        min = m
+                a = u.index(min)
+                try:
+                    centroids[a].append(x)
+                except:
+                    centroids.setdefault(a, [])
+                    centroids[a].append(x)
+            for i in u:
+                a = u.index(i)
+                try:
+                    temp = centroids[a]
+                except:
+                    del u[u.index(i)]
+                total = temp[0]
+                count = 1
+                for j in temp[1:]:
+                    total = list(map(add, total, j))
+                    count += 1
+                # print(total)
+                mean = [x / float(count) for x in total]
+                oldU = u
+                closestPoint = None
+                closestValue = 0
+                for i in temp:
+                    if closestPoint == None:
+                        closestPoint = i
+                        closestValue = minkowskiDistance(i, mean,1)
+                    else:
+                        distance = minkowskiDistance(i, mean,1)
+                        if distance < closestValue:
+                            closestPoint = i
+                            closestValue = distance
 
-        return None
+                try:
+                    u[u.index(i)] = closestPoint
+                except:
+                    mean = mean
+            comb = 0
+            countC = 0
+            for i in range(len(u)):
+                comb += minkowskiDistance(u[i], oldU[i], 1)
+                countC += 1
+            change = comb / float(countC)
+        # print("Means \n",u)
+        return u
 
      #runs a single training/test set, returns accuracy
     def getClassificationPerformance(self, method, trainingSet, testSet, k):
@@ -480,20 +539,25 @@ class main:
         if (method):
             edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
             condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
-        centroidsMean = []
+        centroidsMeans = []
         print("K-Means")
         if(method): #if classification, use the len of the edited knn as the number of clusters
             for j,i in enumerate(edited_sets):
-                centroidsMean.append(knn_instance.kMeans(training_sets[j], len(i)))
+                centroidsMeans.append(knn_instance.kMeans(training_sets[j], len(i)))
         else: #if regression, use 1/4 n with n being the size of the dataset
             for tset in training_sets:
-                centroidsMean.append(knn_instance.kMeans(tset, int(len(tset)/4)))
-            
+                centroidsMeans.append(knn_instance.kMeans(tset, int(len(tset)/4)))
+        centroidsPAM = []
+        print("K-PAM")
+        if (method):  # if classification, use the len of the edited knn as the number of clusters
+            for j, i in enumerate(edited_sets):
+                centroidsPAM.append(knn_instance.kMedoids(training_sets[j], len(i)))
+        else:  # if regression, use 1/4 n with n being the size of the dataset
+            for tset in training_sets:
+                centroidsPAM.append(knn_instance.kMedoids(tset, int(len(tset) / 4)))
 
         #for each value of k, run algorithms
-        for k in range(1,4):
-            k *= 2
-            k += 1
+        for k in [1,3,5]:
             print("\n//////////\nk = " + repr(k) + "\n//////////")
             print("K-NN")
             run_knn(method, knn_instance, training_sets, test_sets, k)
@@ -504,5 +568,6 @@ class main:
                 print("Condensed K-NN")
                 run_knn(method, knn_instance, condensed_sets, test_sets, k)
                 print("K-Means Clustering")
-                run_knn(method, knn_instance, centroidsMean, test_sets, k)
-
+                run_knn(method, knn_instance, centroidsMeans, test_sets, k)
+                print("Partitioning Around Medoids Clustering")
+                run_knn(method, knn_instance, centroidsPAM, test_sets, k)
