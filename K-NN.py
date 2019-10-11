@@ -105,14 +105,14 @@ class pre_processing:
         data = self.removeStrings(data)
 
         self.data = data
-        
+    #Removes Headers from dataset
     def removeHeaders(self, data, rows):
         for i in range(rows):
             del data[0]
 
         print("Deleted Header Row")
         return data
-
+    #Moves first column to last column for consistency
     def moveColumn(self, data):
         for i in range(len(data)):
             temp = data[i][0]
@@ -120,7 +120,7 @@ class pre_processing:
             data[i][-1] = temp
         print("Moved first column to last column")
         return data
-
+    #Removes Strings from dataset
     def removeStrings(self, data):
         stringlist = []
         for i in range(len(data)):
@@ -143,7 +143,7 @@ class pre_processing:
         if(len(stringlist) > 0):
             print("Removed Strings")
         return data
-    #Converts data into a Value Difference Matrix Probabilities for distance calculations
+    #Converts data into a Value Difference Metric Probabilities for distance calculations
     def processClassification(self, inData, fileName):
         #Dictionary for probability conversions
         table = {}
@@ -193,7 +193,7 @@ class pre_processing:
 class k_nearest_neighbor:
     def __init__(self):
         print("init knn")
-
+    #Percormes KNN to get distances and neighbors
     @staticmethod
     def knn(trainingSets, t, k):
         
@@ -201,15 +201,16 @@ class k_nearest_neighbor:
 
         #calculate distances for each training set
         for x in range(len(trainingSets)):
-            dist = minkowskiDistance(t, trainingSets[x], 2)
+            dist = minkowskiDistance(t, trainingSets[x], 'inf')
             distances.append((trainingSets[x], dist))
 
         #find k nearest neighbors
         distances.sort(key = lambda x: x[1])
         neighbors = []
-
+        print("Distances:", distances)
         for x in range(k):
             neighbors.append(distances[x][0])
+        print("Neighbors:", neighbors)
         return neighbors
 
     #calculate class from neighbors using voting
@@ -327,7 +328,7 @@ class k_nearest_neighbor:
                 minDistance = None
                 min = None
                 for m in u:
-                    dist = minkowskiDistance(x,m,2)
+                    dist = minkowskiDistance(x,m,'inf')
                     if minDistance == None:
                         minDistance = dist
                         min = m
@@ -361,11 +362,11 @@ class k_nearest_neighbor:
             comb = 0
             countC = 0
             for i in range(len(u)):
-                comb += minkowskiDistance(u[i], oldU[i], 2)
+                comb += minkowskiDistance(u[i], oldU[i], 'inf')
                 countC += 1
             change = comb/float(countC)
         return u
-
+    #Function to determine the Medoids for K-Nearest Clustering
     def kMedoids(self, data, k):
         u = []
         change = 1
@@ -377,7 +378,7 @@ class k_nearest_neighbor:
                 minDistance = None
                 min = None
                 for m in u:
-                    dist = minkowskiDistance(x, m, 1)
+                    dist = minkowskiDistance(x, m, 'inf')
                     if minDistance == None:
                         minDistance = dist
                         min = m
@@ -409,13 +410,13 @@ class k_nearest_neighbor:
                 for i in temp:
                     if closestPoint == None:
                         closestPoint = i
-                        closestValue = minkowskiDistance(i, mean,1)
+                        closestValue = minkowskiDistance(i, mean,'inf')
                     else:
-                        distance = minkowskiDistance(i, mean,1)
+                        distance = minkowskiDistance(i, mean,'inf')
                         if distance < closestValue:
                             closestPoint = i
                             closestValue = distance
-
+                #Error detection
                 try:
                     u[u.index(i)] = closestPoint
                 except:
@@ -423,7 +424,7 @@ class k_nearest_neighbor:
             comb = 0
             countC = 0
             for i in range(len(u)):
-                comb += minkowskiDistance(u[i], oldU[i], 1)
+                comb += minkowskiDistance(u[i], oldU[i], 'inf')
                 countC += 1
             change = comb / float(countC)
         return u
@@ -439,7 +440,7 @@ class k_nearest_neighbor:
             else:
                 result = float(self.getMean(neighbors))
             predictions.append(result)
-            #print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][len(testSet[x])-1]))
+            print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][len(testSet[x])-1]))
         if(method):
             #for classification we just check if the prediction class = the test set
             return k_nearest_neighbor.getAccuracy(testSet,predictions)
@@ -447,7 +448,7 @@ class k_nearest_neighbor:
             #for regression, we will use MAPE or Mean Absolute Percentage Error
             return k_nearest_neighbor.getMAPE(testSet,predictions)
 
-
+    #Returns the accuracy of a predicted test set
     def getAccuracy(testSet, predictions):
         correct = 0
         for x in range(len(testSet)):
@@ -455,7 +456,7 @@ class k_nearest_neighbor:
                 correct += 1
 
         return (correct/float(len(testSet))) *100.0
-    
+    #Returns Mean Absolute Percent Error
     def getMAPE(testSet,predictions):
         #absolute percentage error
         abs_percent_error = 0.0
@@ -544,6 +545,7 @@ class main:
         test_sets = data.getTestSet()
         edited_sets = None
         condensed_sets = None
+        #Execute edited and condensed sets if classification datasets
         if (method):
             edited_sets = knn_instance.editSets(training_sets, test_sets, 3)
             condensed_sets = knn_instance.condenseSets(training_sets, test_sets, 3)
