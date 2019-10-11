@@ -1,0 +1,370 @@
+K-NN Project
+init knn
+//////////
+data/car.data
+//////////
+Pre-Processing
+Moved first column to last column
+Removed Strings
+Processing Categorical Classification using Similarity Matrix
+Editing Sets...
+159 rows have been edited out
+142 rows have been edited out
+143 rows have been edited out
+145 rows have been edited out
+149 rows have been edited out
+143 rows have been edited out
+135 rows have been edited out
+151 rows have been edited out
+145 rows have been edited out
+149 rows have been edited out
+Condensing Sets...
+Reduced Training set by 1392 values
+Reduced Training set by 1376 values
+Reduced Training set by 1374 values
+Reduced Training set by 1376 values
+Reduced Training set by 1376 values
+Reduced Training set by 1378 values
+Reduced Training set by 1379 values
+Reduced Training set by 1375 values
+Reduced Training set by 1375 values
+Reduced Training set by 1372 values
+Processing K-Means
+Processing K-PAM
+
+//////////
+k = 1
+//////////
+K-NN
+Accuracy: 88.78%
+Edited K-NN
+Accuracy: 89.48%
+Condensed K-NN
+Accuracy: 88.84%
+K-Means Clustering
+Accuracy: 80.06%
+Partitioning Around Medoids Clustering
+Accuracy: 88.95%
+
+//////////
+k = 3
+//////////
+K-NN
+Accuracy: 89.48%
+Edited K-NN
+Accuracy: 89.53%
+Condensed K-NN
+Accuracy: 90.23%
+K-Means Clustering
+Accuracy: 77.03%
+Partitioning Around Medoids Clustering
+Accuracy: 89.19%
+
+//////////
+k = 5
+//////////
+K-NN
+Accuracy: 89.36%
+Edited K-NN
+Accuracy: 89.83%
+Condensed K-NN
+Accuracy: 69.83%
+K-Means Clustering
+Accuracy: 73.49%
+Partitioning Around Medoids Clustering
+Accuracy: 89.48%
+//////////
+data/forestfires.csv
+//////////
+Pre-Processing
+Deleted Header Row
+Removed Strings
+Processing K-Means
+Processing K-PAM
+
+//////////
+k = 1
+//////////
+K-NN
+Mean Absolute Percentage Error: 91.64%
+K-Means Clustering
+Mean Absolute Percentage Error: 91.45%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 89.27%
+
+//////////
+k = 3
+//////////
+K-NN
+Mean Absolute Percentage Error: 91.71%
+K-Means Clustering
+Mean Absolute Percentage Error: 91.25%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 91.61%
+
+//////////
+k = 5
+//////////
+K-NN
+Mean Absolute Percentage Error: 91.68%
+K-Means Clustering
+Mean Absolute Percentage Error: 91.10%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 91.80%
+//////////
+data/segmentation.data
+//////////
+Pre-Processing
+Deleted Header Row
+Moved first column to last column
+Removed Strings
+Processing Categorical Classification using Similarity Matrix
+Editing Sets...
+2 rows have been edited out
+3 rows have been edited out
+3 rows have been edited out
+2 rows have been edited out
+3 rows have been edited out
+4 rows have been edited out
+3 rows have been edited out
+2 rows have been edited out
+3 rows have been edited out
+3 rows have been edited out
+Condensing Sets...
+Reduced Training set by 175 values
+Reduced Training set by 174 values
+Reduced Training set by 174 values
+Reduced Training set by 174 values
+Reduced Training set by 174 values
+Reduced Training set by 174 values
+Reduced Training set by 174 values
+Reduced Training set by 175 values
+Reduced Training set by 174 values
+Reduced Training set by 175 values
+Processing K-Means
+Processing K-PAM
+
+//////////
+k = 1
+//////////
+K-NN
+Accuracy: 97.62%
+Edited K-NN
+Accuracy: 97.62%
+Condensed K-NN
+Accuracy: 97.62%
+K-Means Clustering
+Accuracy: 95.71%
+Partitioning Around Medoids Clustering
+Accuracy: 96.67%
+
+//////////
+k = 3
+//////////
+K-NN
+Accuracy: 97.62%
+Edited K-NN
+Accuracy: 97.14%
+Condensed K-NN
+Accuracy: 83.33%
+K-Means Clustering
+Accuracy: 93.33%
+Partitioning Around Medoids Clustering
+Accuracy: 96.67%
+
+//////////
+k = 5
+//////////
+K-NN
+Accuracy: 96.19%
+Edited K-NN
+Accuracy: 96.19%
+Condensed K-NN
+Accuracy: 53.33%
+K-Means Clustering
+Accuracy: 94.29%
+Partitioning Around Medoids Clustering
+Accuracy: 97.14%
+//////////
+data/abalone.data
+//////////
+Pre-Processing
+Removed Strings
+Processing Categorical Classification using Similarity Matrix
+Editing Sets...
+579 rows have been edited out
+561 rows have been edited out
+552 rows have been edited out
+547 rows have been edited out
+549 rows have been edited out
+567 rows have been edited out
+564 rows have been edited out
+566 rows have been edited out
+566 rows have been edited out
+581 rows have been edited out
+Condensing Sets...
+Reduced Training set by 827 values
+Reduced Training set by 788 values
+Reduced Training set by 806 values
+Reduced Training set by 822 values
+Reduced Training set by 811 values
+Reduced Training set by 835 values
+Reduced Training set by 801 values
+Reduced Training set by 807 values
+Reduced Training set by 811 values
+Reduced Training set by 806 values
+Processing K-Means
+Processing K-PAM
+
+//////////
+k = 1
+//////////
+K-NN
+Accuracy: 23.62%
+Edited K-NN
+Accuracy: 25.78%
+Condensed K-NN
+Accuracy: 22.45%
+K-Means Clustering
+Accuracy: 15.25%
+Partitioning Around Medoids Clustering
+Accuracy: 24.05%
+
+//////////
+k = 3
+//////////
+K-NN
+Accuracy: 24.94%
+Edited K-NN
+Accuracy: 25.92%
+Condensed K-NN
+Accuracy: 23.53%
+K-Means Clustering
+Accuracy: 16.69%
+Partitioning Around Medoids Clustering
+Accuracy: 25.01%
+
+//////////
+k = 5
+//////////
+K-NN
+Accuracy: 27.65%
+Edited K-NN
+Accuracy: 28.54%
+Condensed K-NN
+Accuracy: 25.76%
+K-Means Clustering
+Accuracy: 20.14%
+Partitioning Around Medoids Clustering
+Accuracy: 25.64%
+//////////
+data/machine.data
+//////////
+Pre-Processing
+Removed Strings
+Processing K-Means
+Processing K-PAM
+
+//////////
+k = 1
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.87%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.80%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.81%
+
+//////////
+k = 3
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.85%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.77%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.81%
+
+//////////
+k = 5
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.84%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.75%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.77%
+//////////
+data/winequality-red.csv
+//////////
+Pre-Processing
+Deleted Header Row
+Processing K-Means
+Processing K-PAM
+
+//////////
+k = 1
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.91%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.89%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.88%
+
+//////////
+k = 3
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.90%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.89%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.89%
+
+//////////
+k = 5
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.90%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.89%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.89%
+//////////
+data/winequality-white.csv
+//////////
+Pre-Processing
+Deleted Header Row
+Processing K-Means
+Processing K-PAM
+
+//////////
+k = 1
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.91%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.88%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.87%
+
+//////////
+k = 3
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.89%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.88%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.88%
+
+//////////
+k = 5
+//////////
+K-NN
+Mean Absolute Percentage Error: 99.89%
+K-Means Clustering
+Mean Absolute Percentage Error: 99.88%
+Partitioning Around Medoids Clustering
+Mean Absolute Percentage Error: 99.88%
